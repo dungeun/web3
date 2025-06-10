@@ -1,13 +1,4 @@
 {
-  "env": {
-    "DATABASE_URL": "file:./dev.db"
-  },
-  "builds": [
-    {
-      "src": "next.config.js",
-      "use": "@vercel/next"
-    }
-  ],
   "functions": {
     "src/pages/api/**/*.ts": {
       "includeFiles": "prisma/**/*"
