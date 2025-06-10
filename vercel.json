@@ -1,4 +1,5 @@
 {
+  "buildCommand": "prisma generate && next build",
   "functions": {
     "src/pages/api/**/*.ts": {
       "includeFiles": "prisma/**/*"
