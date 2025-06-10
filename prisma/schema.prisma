@@ -1,0 +1,294 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// 사용자 모델
+model User {
+  id        Int      @id @default(autoincrement())
+  email     String   @unique
+  password  String
+  name      String
+  role      String   @default("user") // admin, user
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  posts     Post[]
+  comments  Comment[]
+}
+
+// 페이지 콘텐츠 모델 (동적 페이지 내용)
+model PageContent {
+  id        Int      @id @default(autoincrement())
+  pageId    String   @unique // home, company, products 등
+  title     String?
+  content   String?  // JSON 형태로 저장
+  metadata  String?  // SEO 메타데이터
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 게시판 카테고리
+model BoardCategory {
+  id          Int      @id @default(autoincrement())
+  slug        String   @unique // notice, news, qna, review
+  name        String
+  description String?
+  orderIndex  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  posts       Post[]
+}
+
+// 게시글 모델
+model Post {
+  id         Int      @id @default(autoincrement())
+  title      String
+  content    String
+  excerpt    String?
+  views      Int      @default(0)
+  isPublished Boolean @default(true)
+  isPinned   Boolean  @default(false)
+  
+  categoryId Int
+  category   BoardCategory @relation(fields: [categoryId], references: [id])
+  
+  authorId   Int
+  author     User     @relation(fields: [authorId], references: [id])
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  comments   Comment[]
+  attachments Attachment[]
+  
+  // 리뷰 게시판용 필드
+  rating     Int?     // 1-5
+  
+  // Q&A 게시판용 필드
+  isAnswered Boolean  @default(false)
+  answeredAt DateTime?
+}
+
+// 댓글 모델
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  
+  postId    Int
+  post      Post     @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  authorId  Int
+  author    User     @relation(fields: [authorId], references: [id])
+  
+  parentId  Int?
+  parent    Comment? @relation("CommentToComment", fields: [parentId], references: [id])
+  replies   Comment[] @relation("CommentToComment")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// 파일 첨부 모델
+model Attachment {
+  id        Int      @id @default(autoincrement())
+  filename  String
+  filepath  String
+  filesize  Int
+  mimetype  String
+  
+  postId    Int?
+  post      Post?    @relation(fields: [postId], references: [id], onDelete: Cascade)
+  
+  galleryId Int?
+  gallery   Gallery? @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+}
+
+// 갤러리 카테고리
+model GalleryCategory {
+  id          Int       @id @default(autoincrement())
+  slug        String    @unique // product, portfolio, event
+  name        String
+  description String?
+  orderIndex  Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  galleries   Gallery[]
+}
+
+// 갤러리 모델
+model Gallery {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String?
+  thumbnailUrl String?
+  isPublished Boolean  @default(true)
+  orderIndex  Int      @default(0)
+  
+  categoryId  Int
+  category    GalleryCategory @relation(fields: [categoryId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  attachments Attachment[]
+}
+
+// 배너/슬라이드 모델
+model Banner {
+  id          Int      @id @default(autoincrement())
+  title       String
+  subtitle    String?
+  imageUrl    String
+  mobileImageUrl String?
+  linkUrl     String?
+  linkTarget  String   @default("_self") // _self, _blank
+  orderIndex  Int      @default(0)
+  isActive    Boolean  @default(true)
+  startDate   DateTime?
+  endDate     DateTime?
+  position    String   // main, sub 등
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 히어로 슬라이드 모델
+model HeroSlide {
+  id          Int      @id @default(autoincrement())
+  title       String
+  subtitle    String?
+  buttonText  String?
+  buttonUrl   String?
+  mediaType   MediaType @default(IMAGE)
+  mediaUrl    String   // 이미지 URL 또는 YouTube URL
+  overlay     Int      @default(10) // 오버레이 투명도 (0-100)
+  orderIndex  Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+// 사이트 설정
+model SiteConfig {
+  id          Int      @id @default(autoincrement())
+  key         String   @unique
+  value       String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// 메뉴 모델
+model Menu {
+  id         Int      @id @default(autoincrement())
+  title      String
+  path       String
+  type       String   @default("internal") // internal, external, page
+  target     String   @default("_self")
+  parentId   Int?
+  parent     Menu?    @relation("MenuToMenu", fields: [parentId], references: [id])
+  children   Menu[]   @relation("MenuToMenu")
+  orderIndex Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  
+  pages      Page[]   // 메뉴와 연결된 페이지들
+}
+
+// 페이지 모델
+model Page {
+  id              Int      @id @default(autoincrement())
+  title           String
+  slug            String   @unique
+  content         String   @default("") // 기본 컨텐츠 (템플릿 미사용시)
+  templateId      String?  // 템플릿 ID
+  sections        String?  // JSON 형태의 섹션 데이터
+  metaTitle       String?
+  metaDescription String?
+  menuId          Int?
+  menu            Menu?    @relation(fields: [menuId], references: [id])
+  isPublished     Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// 상품 카테고리
+model ProductCategory {
+  id          Int       @id @default(autoincrement())
+  code        String    @unique // A, B, C, G, H, S
+  name        String    // 영문명
+  nameKo      String?   // 한글명
+  description String?
+  level       Int       @default(1) // 1: 대분류, 2: 중분류, 3: 소분류
+  parentId    Int?
+  parent      ProductCategory? @relation("CategoryToCategory", fields: [parentId], references: [id])
+  children    ProductCategory[] @relation("CategoryToCategory")
+  orderIndex  Int       @default(0)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  products    Product[]
+}
+
+// 상품 모델
+model Product {
+  id          Int      @id @default(autoincrement())
+  code        String?  // 상품 코드
+  name        String
+  model       String?  // 모델명
+  description String?
+  specifications String? // JSON 형태의 스펙
+  price       Float?   // 가격
+  imageUrl    String?
+  categoryId  Int
+  category    ProductCategory @relation(fields: [categoryId], references: [id])
+  orderIndex  Int      @default(0)
+  isPublished Boolean  @default(true)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  images      ProductImage[]
+}
+
+// 상품 이미지
+model ProductImage {
+  id        Int      @id @default(autoincrement())
+  productId Int
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  url       String   // imageUrl -> url로 변경
+  alt       String?  // caption -> alt로 변경
+  orderIndex Int     @default(0)
+  createdAt DateTime @default(now())
+}
+
+// 방문자 통계
+model VisitorStats {
+  id        Int      @id @default(autoincrement())
+  date      DateTime @unique
+  visitors  Int      @default(0)
+  pageViews Int      @default(0)
+  createdAt DateTime @default(now())
+}

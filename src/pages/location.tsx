@@ -1,0 +1,108 @@
+import React from 'react'
+import { GetServerSideProps } from 'next'
+import Layout from '@/components/Layout/Layout'
+import SectionRenderer from '@/components/Template/SectionRenderer'
+import { prisma } from '@/lib/prisma'
+
+interface LocationPageProps {
+  page: {
+    id: number
+    title: string
+    slug: string
+    content: string
+    templateId?: string
+    sections?: any
+    metaTitle?: string
+    metaDescription?: string
+    isPublished: boolean
+  } | null
+}
+
+export default function LocationPage({ page }: LocationPageProps) {
+  if (!page) {
+    return (
+      <Layout title="페이지를 찾을 수 없습니다">
+        <div className="container py-5">
+          <h1>페이지를 찾을 수 없습니다</h1>
+          <p>요청하신 페이지가 존재하지 않거나 삭제되었습니다.</p>
+        </div>
+      </Layout>
+    )
+  }
+
+  const metaTitle = page.metaTitle || page.title
+  const metaDescription = page.metaDescription || `대경하드웨어 ${page.title}`
+
+  return (
+    <Layout 
+      title={metaTitle} 
+      description={metaDescription}
+      showPageHeader={true}
+      pageTitle={page.title}
+    >
+      <div className="container-limit py-5">
+        {page.sections && Object.keys(page.sections).length > 0 ? (
+          Object.entries(page.sections).map(([sectionId, section]: [string, any]) => (
+            <SectionRenderer
+              key={sectionId}
+              section={section}
+              isPreview={false}
+            />
+          ))
+        ) : (
+          <div className="text-center py-5">
+            <p>콘텐츠가 준비 중입니다.</p>
+          </div>
+        )}
+      </div>
+    </Layout>
+  )
+}
+
+export const getServerSideProps: GetServerSideProps = async () => {
+  try {
+    const page = await prisma.page.findUnique({
+      where: { slug: 'location' },
+      include: {
+        menu: {
+          select: {
+            id: true,
+            title: true,
+            path: true
+          }
+        }
+      }
+    })
+
+    if (!page || !page.isPublished) {
+      return {
+        notFound: true
+      }
+    }
+
+    // sections를 JSON으로 파싱
+    let parsedPage = { ...page, sections: {} }
+    try {
+      parsedPage.sections = JSON.parse(page.sections || '{}')
+    } catch (error) {
+      parsedPage.sections = {}
+    }
+
+    return {
+      props: {
+        page: {
+          ...parsedPage,
+          createdAt: parsedPage.createdAt.toISOString(),
+          updatedAt: parsedPage.updatedAt.toISOString()
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error fetching page:', error)
+    return {
+      props: {
+        page: null
+      }
+    }
+  }
+}

@@ -1,0 +1,248 @@
+.heroSlider {
+  position: relative;
+  width: 100%;
+  height: 50vh;
+  min-height: 400px;
+  max-height: 600px;
+  overflow: hidden;
+}
+
+.slide {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 1s ease-in-out;
+}
+
+.slide.active {
+  opacity: 1;
+}
+
+.slideBackground {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.videoContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  min-width: 100%;
+  min-height: 100%;
+  width: 177.77777778vh;
+  height: 56.25vw;
+  transform: translate(-50%, -50%);
+  z-index: -1;
+  border: none;
+  pointer-events: none;
+}
+
+@media (min-aspect-ratio: 16/9) {
+  .video {
+    width: 100%;
+    height: 56.25vw;
+  }
+}
+
+@media (max-aspect-ratio: 16/9) {
+  .video {
+    width: 177.77777778vh;
+    height: 100%;
+  }
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 1);
+  z-index: 1;
+}
+
+.content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  z-index: 2;
+}
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
+
+.textContent {
+  margin-left: 50px;
+  max-width: 600px;
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 1.5rem;
+  line-height: 1.2;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+  animation: fadeInUp 0.8s ease-out forwards;
+  opacity: 0;
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: #fff;
+  margin-bottom: 2rem;
+  line-height: 1.6;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  animation: fadeInUp 0.8s ease-out 0.2s forwards;
+  opacity: 0;
+}
+
+.textContent :global(.btn-animated) {
+  animation: fadeInUp 0.8s ease-out 0.4s forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.indicators {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 10px;
+  z-index: 3;
+}
+
+.indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background-color: transparent;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0;
+}
+
+.indicator.active {
+  background-color: #fff;
+  width: 40px;
+  border-radius: 6px;
+}
+
+.indicator:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+/* 슬라이드 전환 애니메이션 */
+.slide {
+  animation: fadeIn 1s ease-out;
+}
+
+.slide.active .title {
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.slide.active .subtitle {
+  animation: fadeInUp 0.8s ease-out 0.2s forwards;
+}
+
+.slide.active .textContent :global(.btn-animated) {
+  animation: fadeInUp 0.8s ease-out 0.4s forwards;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 1440px) {
+  .textContent {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 768px) {
+  .heroSlider {
+    height: 45vh;
+    min-height: 350px;
+  }
+
+  .title {
+    font-size: 2rem;
+  }
+
+  .subtitle {
+    font-size: 1.1rem;
+  }
+
+  .textContent {
+    padding: 0 15px;
+  }
+
+  .indicators {
+    bottom: 20px;
+  }
+
+  .indicator {
+    width: 10px;
+    height: 10px;
+  }
+
+  .indicator.active {
+    width: 30px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroSlider {
+    height: 40vh;
+    min-height: 300px;
+  }
+
+  .title {
+    font-size: 1.5rem;
+  }
+
+  .subtitle {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+}
