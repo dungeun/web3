@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Container, Row, Col, Card, Button, Form, Alert, Image } from 'react-bootstrap'
 import AdminLayout from '@/components/Admin/AdminLayout'
 import AdminSidebar from '@/components/Admin/AdminSidebar'
+import ImageUploader from '@/components/Admin/ImageUploader'
 
 interface Product {
   id: number
@@ -53,6 +54,9 @@ export default function AdminProductEdit() {
     categoryId: '',
     isActive: true
   })
+  
+  const [images, setImages] = useState<Array<{ url: string; alt?: string }>>([])
+  const [imagesToDelete, setImagesToDelete] = useState<number[]>([])
 
   useEffect(() => {
     if (id) {
@@ -79,6 +83,14 @@ export default function AdminProductEdit() {
           categoryId: data.category.id.toString(),
           isActive: data.isActive
         })
+        // 이미지 설정
+        if (data.images && data.images.length > 0) {
+          setImages(data.images.map((img: any) => ({
+            id: img.id,
+            url: img.url,
+            alt: img.alt || ''
+          })))
+        }
       } else {
         setError(data.message || '상품을 불러올 수 없습니다.')
       }
@@ -106,6 +118,13 @@ export default function AdminProductEdit() {
     setError('')
     
     try {
+      // 이미지 데이터 준비
+      const processedImages = images.map((img, index) => ({
+        url: img.url,
+        alt: img.alt || `${formData.name} 이미지 ${index + 1}`,
+        orderIndex: index
+      }))
+
       const res = await fetch(`/api/admin/products/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -113,7 +132,8 @@ export default function AdminProductEdit() {
           ...formData,
           price: formData.price ? parseFloat(formData.price) : null,
           categoryId: parseInt(formData.categoryId),
-          images: product?.images || []
+          images: processedImages,
+          imagesToDelete
         })
       })
 
@@ -360,50 +380,11 @@ export default function AdminProductEdit() {
             </Col>
 
             <Col lg={4}>
-              <Card>
-                <Card.Header>
-                  <h5 className="mb-0">
-                    <i className="fas fa-images me-2"></i>
-                    상품 이미지 ({product.images.length}개)
-                  </h5>
-                </Card.Header>
-                <Card.Body>
-                  {product.images.length > 0 ? (
-                    <div className="row g-2">
-                      {product.images.map((image, index) => (
-                        <div key={image.id} className="col-6">
-                          <div className="position-relative">
-                            <Image
-                              src={image.url}
-                              alt={image.alt}
-                              className="w-100 rounded"
-                              style={{ aspectRatio: '1/1', objectFit: 'cover' }}
-                            />
-                            <div className="position-absolute top-0 start-0 m-1">
-                              <span className="badge bg-primary">{index + 1}</span>
-                            </div>
-                          </div>
-                          <small className="text-muted d-block mt-1 text-truncate">
-                            {image.alt}
-                          </small>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="text-center py-4">
-                      <i className="fas fa-image text-muted fa-3x mb-3"></i>
-                      <p className="text-muted">등록된 이미지가 없습니다.</p>
-                    </div>
-                  )}
-                  
-                  <div className="mt-3 pt-3 border-top">
-                    <small className="text-muted">
-                      <i className="fas fa-info-circle me-1"></i>
-                      이미지는 폴더 구조와 자동으로 연결됩니다.
-                    </small>
-                  </div>
-                </Card.Body>
-              </Card>
+              <ImageUploader
+                images={images}
+                onImagesChange={setImages}
+                maxImages={10}
+              />
             </Col>
           </Row>
         </div>

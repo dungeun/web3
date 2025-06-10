@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { Card, Form, Button, Alert, Row, Col } from 'react-bootstrap'
 import AdminLayout from '@/components/Admin/AdminLayout'
 import AdminSidebar from '@/components/Admin/AdminSidebar'
+import ImageUploader from '@/components/Admin/ImageUploader'
 
 interface ProductCategory {
   id: number
@@ -27,7 +28,7 @@ export default function AdminProductAdd() {
     isActive: true
   })
 
-  const [images, setImages] = useState<Array<{ url: string; alt: string }>>([])
+  const [images, setImages] = useState<Array<{ url: string; alt?: string }>>([])
 
   useEffect(() => {
     fetchCategories()
@@ -51,6 +52,13 @@ export default function AdminProductAdd() {
     setError('')
 
     try {
+      // 이미지 데이터 준비
+      const processedImages = images.map((img, index) => ({
+        url: img.url,
+        alt: img.alt || `${formData.name} 이미지 ${index + 1}`,
+        orderIndex: index
+      }))
+
       const res = await fetch('/api/admin/products', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -59,7 +67,7 @@ export default function AdminProductAdd() {
           categoryId: Number(formData.categoryId),
           price: formData.price ? Number(formData.price) : null,
           specifications: formData.specifications ? JSON.parse(formData.specifications) : null,
-          images
+          images: processedImages
         })
       })
 
@@ -82,20 +90,6 @@ export default function AdminProductAdd() {
 
   const handleChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value })
-  }
-
-  const addImage = () => {
-    setImages([...images, { url: '', alt: '' }])
-  }
-
-  const removeImage = (index: number) => {
-    setImages(images.filter((_, i) => i !== index))
-  }
-
-  const updateImage = (index: number, field: string, value: string) => {
-    const newImages = [...images]
-    newImages[index] = { ...newImages[index], [field]: value }
-    setImages(newImages)
   }
 
   return (
@@ -237,70 +231,16 @@ export default function AdminProductAdd() {
                     </Form.Group>
                   </Card.Body>
                 </Card>
-
-                <Card className="mb-4">
-                  <Card.Header>
-                    <div className="d-flex justify-content-between align-items-center">
-                      <h5 className="mb-0">
-                        <i className="fas fa-images me-2"></i>
-                        상품 이미지
-                      </h5>
-                      <Button variant="outline-primary" size="sm" onClick={addImage}>
-                        <i className="fas fa-plus me-2"></i>이미지 추가
-                      </Button>
-                    </div>
-                  </Card.Header>
-                  <Card.Body>
-                    {images.length === 0 ? (
-                      <p className="text-muted text-center py-3">
-                        이미지가 등록되지 않았습니다. 이미지 추가 버튼을 클릭하세요.
-                      </p>
-                    ) : (
-                      images.map((image, index) => (
-                        <div key={index} className="border rounded p-3 mb-3">
-                          <div className="d-flex justify-content-between align-items-center mb-2">
-                            <h6 className="mb-0">이미지 {index + 1}</h6>
-                            <Button
-                              variant="outline-danger"
-                              size="sm"
-                              onClick={() => removeImage(index)}
-                            >
-                              <i className="fas fa-trash"></i>
-                            </Button>
-                          </div>
-                          <Row>
-                            <Col md={8}>
-                              <Form.Group className="mb-2">
-                                <Form.Label>이미지 URL</Form.Label>
-                                <Form.Control
-                                  type="url"
-                                  value={image.url}
-                                  onChange={(e) => updateImage(index, 'url', e.target.value)}
-                                  placeholder="이미지 URL을 입력하세요"
-                                />
-                              </Form.Group>
-                            </Col>
-                            <Col md={4}>
-                              <Form.Group className="mb-2">
-                                <Form.Label>Alt 텍스트</Form.Label>
-                                <Form.Control
-                                  type="text"
-                                  value={image.alt}
-                                  onChange={(e) => updateImage(index, 'alt', e.target.value)}
-                                  placeholder="이미지 설명"
-                                />
-                              </Form.Group>
-                            </Col>
-                          </Row>
-                        </div>
-                      ))
-                    )}
-                  </Card.Body>
-                </Card>
               </Col>
 
               <Col lg={4}>
-                <Card>
+                <ImageUploader
+                  images={images}
+                  onImagesChange={setImages}
+                  maxImages={10}
+                />
+
+                <Card className="mt-4">
                   <Card.Header>
                     <h5 className="mb-0">
                       <i className="fas fa-save me-2"></i>
@@ -353,10 +293,10 @@ export default function AdminProductAdd() {
                         예: A-610, B-100, C-026
                       </p>
                       
-                      <h6>이미지 URL</h6>
+                      <h6>이미지 업로드</h6>
                       <p className="small">
-                        이미지 파일의 전체 URL을 입력하세요.<br />
-                        예: /images/products/A-610.jpg
+                        상품 이미지를 드래그하거나 클릭하여 업로드하세요.<br />
+                        최대 10개, 각 5MB 이하의 이미지를 업로드할 수 있습니다.
                       </p>
                       
                       <h6>제품 사양</h6>

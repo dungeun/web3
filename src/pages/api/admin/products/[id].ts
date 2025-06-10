@@ -66,17 +66,20 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse, id: number) 
         isActive: isActive !== undefined ? isActive : true
       },
       include: {
-        category: true
+        category: true,
+        images: {
+          orderBy: { orderIndex: 'asc' }
+        }
       }
     })
 
     // 새 이미지 생성
     if (images && images.length > 0) {
-      const imageData = images.map((image: any, index: number) => ({
+      const imageData = images.map((image: any) => ({
         productId: id,
         url: image.url,
         alt: image.alt || product.name,
-        orderIndex: index
+        orderIndex: image.orderIndex || 0
       }))
 
       await prisma.productImage.createMany({
@@ -84,7 +87,18 @@ async function handlePut(req: NextApiRequest, res: NextApiResponse, id: number) 
       })
     }
 
-    res.status(200).json(product)
+    // 업데이트된 상품 정보를 이미지와 함께 반환
+    const updatedProduct = await prisma.product.findUnique({
+      where: { id },
+      include: {
+        category: true,
+        images: {
+          orderBy: { orderIndex: 'asc' }
+        }
+      }
+    })
+
+    res.status(200).json(updatedProduct)
   } catch (error) {
     console.error('Update product error:', error)
     res.status(500).json({ message: '서버 오류가 발생했습니다.' })

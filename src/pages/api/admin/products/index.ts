@@ -93,11 +93,11 @@ async function handlePost(req: NextApiRequest, res: NextApiResponse) {
 
     // 이미지가 있으면 생성
     if (images && images.length > 0) {
-      const imageData = images.map((image: any, index: number) => ({
+      const imageData = images.map((image: any) => ({
         productId: product.id,
         url: image.url,
         alt: image.alt || product.name,
-        orderIndex: index
+        orderIndex: image.orderIndex || 0
       }))
 
       await prisma.productImage.createMany({

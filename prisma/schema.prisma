@@ -240,6 +240,7 @@ model ProductCategory {
   name        String    // 영문명
   nameKo      String?   // 한글명
   description String?
+  imageUrl    String?   // 카테고리 이미지
   level       Int       @default(1) // 1: 대분류, 2: 중분류, 3: 소분류
   parentId    Int?
   parent      ProductCategory? @relation("CategoryToCategory", fields: [parentId], references: [id])
